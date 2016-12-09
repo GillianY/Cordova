@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>HTML5 APP Traning - Storage</title>
+	<link rel="stylesheet" href="css/jquery.mobile.css" />
+	<script src="js/jquery.js"></script>
+    <script>
+	var db;
+	
+	$(document).ready(function(e) {
+		$(document).on("deviceready", deviceReadyHandler);
+    });
+	
+	function deviceReadyHandler()
+	{
+		db = window.openDatabase("test", "1.0", "test database", 1000);
+        logData("Open DB Success!");
+        
+        $(document).on("click", "#createButton", createButtonHandler);
+        $(document).on("click", "#insertButton", insertButtonHandler);
+        $(document).on("click", "#selectButton", selectButtonHandler);
+	}
+    
+    //create table
+    function createButtonHandler(){
+        if(db){
+            db.transaction(createDBTransactionSuccessHandler, errorHandler, createDbSQLSuccessHandler);
+        }else{
+            alert("No DB Connection!");
+        }
+    }
+    
+    function createDBTransactionSuccessHandler(sqlTransaction){//取得sqlTransaction成功
+        sqlTransaction.executeSql("DROP TABLE IF EXISTS demo");
+        var sqlValue = "CREATE TABLE demo (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)";
+        sqlTransaction.executeSql(sqlValue);
+    }
+    
+    function createDbSQLSuccessHandler(){
+        logData("create table success!");
+    }
+    
+    //insert data
+    function insertButtonHandler(){
+        if(db){
+            db.transaction(insertTransactionSuccessHandler, errorHandler, insertSQLSuccessHandler);
+        }else{
+            alert("No DB Connection!");
+        }
+    }
+    
+    function insertTransactionSuccessHandler(sqlTransaction){//取得sqlTransaction成功
+        var nameValue = $("#nameInput").val();
+        
+        var sqlValue = "INSERT INTO demo (name) VALUES ('"+ nameValue +"')";
+        sqlTransaction.executeSql(sqlValue);
+    }
+    
+    function insertSQLSuccessHandler(){
+        logData("insert table success!");
+    }
+    
+    //select data
+    function selectButtonHandler(){
+        if(db){
+            db.transaction(selectTransactionSuccessHandler, errorHandler, selectSQLSuccessHandler);
+        }else{
+            alert("No DB Connection!");
+        }
+    }
+    
+    function selectTransactionSuccessHandler(sqlTransaction){//取得sqlTransaction成功
+        var sqlValue = "SELECT id, name FROM demo";
+        sqlTransaction.executeSql(sqlValue, [], successSelectResultSetHandler, errorHandler);
+    }
+    
+    function successSelectResultSetHandler(sqlTransaction, sqlResultSet){
+        var sqlResultSetList = sqlResultSet.rows;
+        
+        logData("You got " + sqlResultSetList.length + " records:");
+        for(var i=0;i<sqlResultSetList.length;i++){
+            var info = "ID: " + sqlResultSetList.item(i).id + ", name: " + sqlResultSetList.item(i).name;
+            logData(info);
+        }
+    }
+    
+    function selectSQLSuccessHandler(){
+        logData("select table success!");
+    }
+    
+    function errorHandler(err){
+        navigator.notification.alert("SQLite has some problem: " + err.code, null, "Error", "OK");
+    }
+	
+	$(document).on("pageinit", "#home",  pageInitHandler);
+	
+	function pageInitHandler()
+	{
+		
+	}
+    
+    function logData(msg){
+        $("#log").append("<li>" + msg + "</li>");
+    }
+	
+    </script>
+	<script src="js/jquery.mobile.js"></script>
+	<script src="cordova.js"></script>
+
+</head>
+<body>
+
+<div data-role="page" id="home">
+	<div data-role="header" data-position="fixed">
+    	<h1>Storage</h1>
+    </div>
+    <div data-role="content" id="content">
+    
+    	<h1>SQLite Storage</h1>
+        
+        <input type="text" id="nameInput">
+        
+        <a href="#" data-role="button" id="createButton">Create database table</a>
+        <a href="#" data-role="button" id="insertButton">Insert Data</a>
+        <a href="#" data-role="button" id="selectButton">Query Data</a>
+        
+        <ul id="log">
+        </ul>
+    
+    </div>
+	<div data-role="footer" data-position="fixed">
+    	<h1>HTML5 APP TRAINING</h1>
+    </div>
+</div>
+
+
+</body>
+</html>

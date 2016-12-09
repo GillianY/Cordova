@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>HTML5 APP Traning - Event</title>
+		<link rel="stylesheet" href="css/jquery.mobile.css" />
+		<script src="js/jquery.js"></script>
+		<script>
+			$(document).ready(function(e) {
+				$(document).on("deviceready", deviceReadyHandler);
+			});
+
+			function checkConnection() {
+				var networkState = navigator.connection.type;
+				var states = {};
+				states[Connection.UNKNOWN] = '不知名的連線';
+				states[Connection.ETHERNET] = '乙太連線';
+				states[Connection.WIFI] = 'WiFi連線';
+				states[Connection.CELL_2G] = '2G連線';
+				states[Connection.CELL_3G] = '3G連線';
+				states[Connection.CELL_4G] = '4G連線';
+				states[Connection.NONE] = '無法連線';
+				return states[networkState];
+			}
+
+			function deviceReadyHandler() {
+				logData("Device Ready: " + checkConnection());
+
+				$(document).on("pause", pauseHandler);
+				$(document).on("resume", resumeHandler);
+				$(document).on("online", onlineHandler);
+				$(document).on("offline", offlineHandler);
+
+				$(document).on("batterycritical", batteryHandler);
+				$(document).on("batterylow", batteryHandler);
+				$(document).on("batterystatus", batteryHandler);
+			}
+
+			function batteryHandler(status) {
+				logData("Battery level: " + status.level + " %");
+			}
+
+			function pauseHandler() {
+				logData("pause!");
+			}
+
+			function resumeHandler() {
+				logData("resume!");
+			}
+
+			function onlineHandler() {
+				logData("On Line: " + checkConnection());
+			}
+
+			function offlineHandler() {
+				logData("Off Line: " + checkConnection());
+			}
+
+
+			$(document).on("pageinit", "#home", pageInitHandler);
+
+			function pageInitHandler() {
+
+			}
+
+			function logData(msg) {
+				$("#log").append("<li>" + msg + "</li>");
+			}
+
+		</script>
+		<script src="js/jquery.mobile.js"></script>
+		<script src="cordova.js"></script>
+
+	</head>
+	<body>
+
+		<div data-role="page" id="home">
+			<div data-role="header" data-position="fixed">
+				<h1>Event</h1>
+			</div>
+			<div data-role="content" id="content">
+
+				<h1>Event Log:</h1>
+				<ul id="log"></ul>
+
+			</div>
+			<div data-role="footer" data-position="fixed">
+				<h1>PhoneGap APP TRAINING</h1>
+			</div>
+		</div>
+
+	</body>
+</html>

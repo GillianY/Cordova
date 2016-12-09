@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>HTML5 APP Traning - File</title>
+	<link rel="stylesheet" href="css/jquery.mobile.css" />
+	<script src="js/jquery.js"></script>
+    <script>
+	var fs;
+	var newDir;
+	var sampleFile;
+	
+	$(document).ready(function(e) {
+		$(document).on("deviceready", deviceReadyHandler);
+    });
+	
+	function deviceReadyHandler(){
+		window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, 
+			fileSystemSuccessHandler, errorHandler);
+		
+		$(document).on("click", "#listDirButton", listDirButtonHandler);
+		$(document).on("click", "#createDirButton", createDirButtonHandler);
+		$(document).on("click", "#removeDirButton", removeDirButtonHandler);
+		
+		$(document).on("click", "#readFileButton", readFileButtonHandler);
+		$(document).on("click", "#writeFileButton", writeFileButtonHandler);
+		$(document).on("click", "#removeFileButton", removeFileButtonHandler);
+	}
+	
+	//get FileSystem
+	function fileSystemSuccessHandler(fileSys){
+		fs = fileSys;
+		logData("File System ready");
+		
+		console.log("com.test.File: File System ready");
+	}
+	
+	function errorHandler(e){
+		navigator.notification.alert("File process has got some trouble:" 
+		+ e.code,  null, "ERROR", "OK");
+	}
+	
+	//list dir
+	function listDirButtonHandler(){
+		var docReader = fs.root.createReader(); 
+		docReader.readEntries(listDirSuccessHandler, errorHandler);		
+	}
+	
+	function listDirSuccessHandler(entries){
+		logData("You found " + entries.length + " entries:");
+		for(var i=0;i<entries.length;i++){
+			logData(entries[i].name);
+		}
+	}
+	
+	//remove dir: newDir
+	function removeDirButtonHandler(){
+		if(newDir){
+			newDir.remove(removeDirSuccessHandler, errorHandler);
+		}else{
+			alert("Error: you must create dir first!");	
+		}
+	}
+	
+	function removeDirSuccessHandler(){
+		logData("Remove dir success(newDir).");
+		newDir = undefined;
+	}
+	
+	//create/get dir: newDir
+	function createDirButtonHandler(){
+		fs.root.getDirectory("newDir", {create:true}, 
+			createDirSuccessHandler, errorHandler);
+	}
+	
+	function createDirSuccessHandler(dirEntry){
+		newDir = dirEntry;
+		logData("getDirectory Success: " + dirEntry.name);
+	}
+	
+	//get(create) File, read file
+	function readFileButtonHandler () {
+		fs.root.getFile("Sample.txt", {create:true}, readFileSuccessHandler, errorHandler);
+	}
+	
+	function readFileSuccessHandler(fileEntry){
+		sampleFile = fileEntry;
+		logData("getFile success(Sample.txt)!");
+		
+		sampleFile.file(fileReaderHandler, errorHandler); //取得檔案的fileRef
+	}
+	
+	function fileReaderHandler(fileRef){
+		var reader = new FileReader();
+		reader.onloadend = fileLoadCompleteHandler;
+		reader.readAsText(fileRef); //開始讀取該⽂文字檔案的內容
+	}
+	
+	function fileLoadCompleteHandler(e){
+		var result = e.target.result;
+		$("#editor").val(result);
+		logData("Read file success!");
+	}
+	
+	//write file
+	function writeFileButtonHandler () {
+		//alert("writeFileButtonHandler");
+		if(sampleFile){
+			sampleFile.createWriter(fileWriterHandler, errorHandler); 
+		}else{
+			alert("Error: You must readFile first!");
+		}
+	}
+	
+	function fileWriterHandler (writer) {
+		try{
+			//writer.onload = fileWriterCompleteHandler;
+			writer.onwriteend = fileWriterCompleteHandler;
+			writer.write($("#editor").val());
+		}catch(err){
+			alert("Write Error: " + err);
+		}
+	}
+	
+	function fileWriterCompleteHandler(){
+		logData("Write file success!(Sample.txt)");		
+	}
+	
+	//remove file(Sample.txt)
+	function removeFileButtonHandler () {
+		//alert("removeFileButtonHandler");
+		if(sampleFile){
+			sampleFile.remove(removeFileSuccessHandler, errorHandler);
+			sampleFile = undefined;
+		}else{
+			alert("Error: You must readFile first!");
+		}
+	}
+	
+	function removeFileSuccessHandler(){
+		logData("Remove file success!(Sample.txt)");		
+	}
+	
+	function logData(msg){
+		$("#log").append('<li>' + msg + '</li>');
+	}
+		
+    </script>
+	<script src="js/jquery.mobile.js"></script>
+    <script src="cordova.js"></script>
+</head>
+<body>
+
+<div data-role="page" id="home">
+	<div data-role="header" data-position="fixed">
+    	<h1>File</h1>
+    </div>
+    <div data-role="content" id="content">
+    
+    	<h1>File System</h1>
+        <textarea id="editor"></textarea>
+        <ul id="log">
+        	<li>File System log:</li>
+        </ul>
+        <a href="#" data-role="button" id="listDirButton">List Directory</a>
+        <a href="#" data-role="button" id="createDirButton">Create Directory</a>
+        <a href="#" data-role="button" id="removeDirButton">Remove Directory</a>
+        <a href="#" data-role="button" id="readFileButton">Read File</a>
+        <a href="#" data-role="button" id="writeFileButton">Write File</a>
+        <a href="#" data-role="button" id="removeFileButton">Remove File</a>
+    
+    </div>
+	<div data-role="footer" data-position="fixed">
+    	<h1>HTML5 APP TRAINING</h1>
+    </div>
+</div>
+
+
+</body>
+</html>

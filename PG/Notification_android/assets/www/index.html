@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>HTML5 APP Traning - Notification</title>
+	<link rel="stylesheet" href="css/jquery.mobile.css" />
+	<script src="js/jquery.js"></script>
+    <script>
+	
+	$(document).ready(function(e) {
+		$(document).on("deviceready", deviceReadyHandler);
+    });
+	
+	function deviceReadyHandler()
+	{	
+		$(document).on("click", "#alertButton", alertButtonHandler);
+		$(document).on("click", "#confirmButton", confirmButtonHandler);	
+		$(document).on("click", "#beepButton", beepButtonHandler);
+		$(document).on("click", "#vibrateButton", vibrateButtonHandler);	
+		
+		var info = "Name: " + device.model + "<br>"; 
+		info += "Cordova: " + device.cordova + "<br>"; 
+		info += "Platform: " + device.platform + "<br>"; 
+		info += "Version: " + device.version + "<br>"; 
+		info += "UUID: " + device.uuid; 
+		$("#status").html(info);
+	}
+	
+	function alertButtonHandler(){
+		navigator.notification.alert("歡迎使用PhoneGap!", alertCallBack, "系統訊息", "哈囉");
+	}
+	
+	function alertCallBack(){
+		console.log("Alert call back");
+	}
+	
+	function confirmButtonHandler(){
+		navigator.notification.confirm("你喜歡PhoneGap嗎?", confirmCallBack, 
+									"系統問題", ["Yes", "No", "Cancel"]); //1, 2, 3
+	}
+	
+	function confirmCallBack(btnIndex){
+		switch(btnIndex){
+			case 1:
+				alert("Good!");
+				break;
+			case 2:
+				alert("真可惜！");
+				break;
+		}
+	}
+	
+	function beepButtonHandler(){
+		//alert("beep");
+		navigator.notification.beep(5); //iOS只會beep 1次	
+	}
+	
+	function vibrateButtonHandler(){
+		navigator.notification.vibrate(5000); //iOS只會震動約0.5sec	
+	}
+	
+	$(document).on("pageinit", "#home", pageInitHandler);
+	
+	function homeInitHandler()
+	{
+		
+	}
+
+    </script>
+	<script src="js/jquery.mobile.js"></script>
+    <script src="cordova.js"></script>
+</head>
+<body>
+
+<div data-role="page" id="home">
+	<div data-role="header" data-position="fixed">
+    	<h1>Notification</h1>
+    </div>
+    <div data-role="content">  
+    	<a href="#" data-role="button" id="alertButton">Alert</a>
+        <a href="#" data-role="button" id="confirmButton">Confirm</a>
+        <a href="#" data-role="button" id="beepButton">Beep</a>
+        <a href="#" data-role="button" id="vibrateButton">Vibrate</a>
+    	<p id="status"></p>
+    </div>
+	<div data-role="footer" data-position="fixed">
+    	<h1>PhoneGap APP TRAINING</h1>
+    </div>
+</div>
+
+
+</body>
+</html>

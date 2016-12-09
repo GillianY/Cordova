@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>HTML5 APP Traning - Accelerometer</title>
+	<link rel="stylesheet" href="css/jquery.mobile.css" />
+    <style>
+    #robot{
+		width:128px;
+		height:128px;
+		display:block;
+		background:url(robot.png) no-repeat;
+		position:absolute;
+		left:100px;
+		top:200px;
+	}
+    </style>
+	<script src="js/jquery.js"></script>
+    <script>
+	$(document).ready(function(e) {
+		$(document).on("deviceready", devicereadyHandler);
+    });
+	
+    var watchID;
+    
+	function devicereadyHandler()
+	{
+        //try{
+        //  watchID=  navigator.accelerometer.watchAcceleration( successHandler, errorHandler, {"frequency":100});
+        //}catch(ex){
+        //    alert("無法啟動Accelemeter 服務"＋e);
+            //console.log(ex);
+        //}
+        
+        resumeHandler();
+        $(document).on("pause", pauseHandler);
+        $(document).on("resume", resumeHandler);
+	}
+    function pauseHandler (){
+        
+        if(watchID){
+            navigator.accelerometer.clearWatch(watchID);
+        }
+        watchID = undefined;
+        
+    }
+    
+    function resumeHandler(){
+        
+        try{
+            watchID=  navigator.accelerometer.watchAcceleration( successHandler, errorHandler, {"frequency":100});
+        }catch(ex){
+            alert("無法啟動Accelemeter 服務"＋ex);
+            console.log("無法啟動Accelemeter 服務"＋ex);
+        }
+
+    
+    }
+    
+    
+    function successHandler(e){
+        var info = "X:" + e.x + "<br>";
+        info += "Y:"+ e.y +"<br>";
+        info += "Z:"+ e.z +"<br>";
+        
+        $("#status").html(info);
+        
+        var posX = $("#robot").position().left;
+        var posY = $("#robot").position().top;
+        posX = posX - e.x;
+        posY = posY + e.y;
+        
+        var range = [-20.0 ,40.0 , $(window).width()-110.0, $(window).height()-160.0];
+        
+        if (posX <= range[0]){ posX = range[0];
+        } else if(posX >= range[2]){
+            posX = range[2]; }
+        if (posY<=range[1]){ posY = range[1];
+        }else if(posY >= range[3]){
+            posY = range[3]; }
+        
+        
+        $("#robot").css({"left"+:posX+"px","top":posY+"px"});
+        
+    }
+	
+	
+	$(document).on("pageinit", "#home", pageInitHandler);
+	
+	function pageInitHandler()
+	{
+		
+	}
+	
+    </script>
+	<script src="js/jquery.mobile.js"></script>
+    <script src="cordova.js"></script>
+	
+</head>
+<body>
+
+<div data-role="page" id="home">
+	<div data-role="header" data-position="fixed">
+    	<h1>Accelerometer</h1>
+    </div>
+    <div data-role="content" id="content">
+    
+    	<h1>Accelerometet's information:</h1>
+        <p id="status">
+        X: 0<br>
+        Y: 0<br>
+        Z: 0<br>
+        </p>
+        
+        <a href="#" id="robot"></a>
+    
+    </div>
+	<div data-role="footer" data-position="fixed">
+		<h1>PhoneGap APP TRAINING</h1>
+    </div>
+</div>
+
+
+</body>
+</html>

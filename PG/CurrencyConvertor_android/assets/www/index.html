@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>HTML5 APP Traning - Example</title>
+	<link rel="stylesheet" href="css/jquery.mobile.css" />
+    <script src="cordova.js"></script>
+	<script src="js/jquery.js"></script>
+    <script>
+	$(document).ready(function(e) {
+		$(document).on("deviceready", deviceReadyHandler);
+    });
+	
+	function deviceReadyHandler(){
+	}
+	
+	$(document).on("pageinit", "#home", pageInitHandler);
+	
+	function pageInitHandler(){
+		$("#convertButton").on("click", convertHandler);
+	}
+        
+    /*
+		POST http://www.webservicex.net/CurrencyConvertor.asmx HTTP/1.1
+		Host: www.webservicex.net
+		Content-Type: text/xml; charset=utf-8
+		Content-Length: length
+		SOAPAction: "http://www.webserviceX.NET/ConversionRate"
+		
+		<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+		  <soap:Body><ConversionRate xmlns="http://www.webserviceX.NET/">
+		      <FromCurrency>USD</FromCurrency>
+		      <ToCurrency>TWD</ToCurrency>
+		    </ConversionRate></soap:Body>
+		</soap:Envelope>     
+     * */
+    function convertHandler(){
+        /*
+         	iOS務必在config.xml加上：
+            <access origin="www.webservicex.net" subdomains="true"/>   <!--browserOnly="true" -->
+         */
+
+		var fromStr = $("#fromInput").val(); 
+		var toStr = $("#toInput").val();
+		
+		var soapMessage = '<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '+
+						  'xmlns:xsd="http://www.w3.org/2001/XMLSchema" '+
+						  'xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">'+
+  						  '<soap:Body><ConversionRate xmlns="http://www.webserviceX.NET/">' + 
+      					  '<FromCurrency>'+fromStr+'</FromCurrency>'+
+      					  '<ToCurrency>'+toStr+'</ToCurrency>' + 
+    					  '</ConversionRate></soap:Body>'+
+    					  '</soap:Envelope>';
+    					  
+    	try{
+			$.ajax({
+				url: "http://www.webserviceX.NET/CurrencyConvertor.asmx",
+				type:"POST",
+				dataType: "xml",
+				contentType: "text/xml; charset=utf-8",
+				data:soapMessage, 
+				beforeSend: function (xhr){
+					xhr.setRequestHeader("SOAPAction", "http://www.webserviceX.NET/ConversionRate");
+				},
+				success: processSuccessHandler, 
+				error: processErrorHandler, 
+				complete: processCompleteHandler			
+			});    				
+			$.mobile.loading("show");	  
+		}catch(err){
+			alert("error:" + err);
+		}
+    }	
+    
+    function processSuccessHandler(xmlHttpRequest, status){
+    	var xml;
+    	if (window.XMLSerializer) {
+			xml =(new window.XMLSerializer()).serializeToString(xmlHttpRequest); 
+			//alert("XMLSerializer:" + xml);
+		}else {
+    		xml = xmlHttpRequest.xml;
+    	}
+    	
+    	var xmlDoc = $.parseXML(xml),
+		$xml = $(xmlDoc),
+		$title = $xml.find( "ConversionRateResult" ); 
+		$("#result").val($title.text());
+    }
+    
+    function processErrorHandler(xhr, status, error){
+    	var errMsg;
+    	if(status=="error"){
+    		errMsg = "無法取得服務,請更正或稍後再試";
+    	}else{
+    		errMsg = "無法取得服務";
+    	}
+    	
+    	alert(errMsg);
+    }
+    
+    function processCompleteHandler(xmlHttpRequest, status){ 
+    	//alert("complete: " + xmlHttpRequest + ", status:" + status); 
+    	$.mobile.loading("hide");
+	}
+    
+</script>
+<script src="js/jquery.mobile.js"></script>
+	
+</head>
+<body>
+
+<div data-role="page" id="home">
+	<div data-role="header">
+    	<h1>Example</h1>
+    </div>
+    <div data-role="content" id="content">
+        <div data-role="fieldcontain">
+            <label for="fromInput">From:</label>
+            <input type="text" id="fromInput" name="fromInput" value="USD">
+        </div>
+        <div data-role="fieldcontain">
+            <label for="name">To:</label>
+            <input type="text" name="toInput" id="toInput" value="TWD">
+        </div>
+        <a id="convertButton" data-role="button" href="#">Get ConversionRate</a>
+        <div data-role="fieldcontain">
+            <label for="name">Conversion Rate:</label>
+            <input type="text" name="result" id="result" value="30" readonly data-theme='e'>
+        </div>
+    </div>
+	<div data-role="footer" data-position="fixed">
+    	<h1>PhoneGap APP TRAINING</h1>
+    </div>
+</div>
+
+
+</body>
+</html>

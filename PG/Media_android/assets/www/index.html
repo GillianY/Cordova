@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>HTML5 APP Traning - Media</title>
+        <link rel="stylesheet" href="css/jquery.mobile.css" />
+        <style>
+            h1 {
+                text-align: center;
+            }
+
+            img {
+                background: #EEE;
+                padding: 10px;
+                border: 1px solid #999;
+                margin: 0 auto;
+                width: 200px;
+                height: 200px;
+                box-shadow: 0 0 10px #999;
+                display: block;
+            }
+
+            .ui-icon-play:after {
+                background: url(images/media-play.png);
+                background-size: contain;
+            }
+
+            .ui-icon-pause:after {
+                background: url(images/media-pause.png);
+                background-size: contain;
+            }
+
+            .ui-icon-stop:after {
+                background: url(images/media-stop.png);
+                background-size: contain;
+            }
+
+            .ui-icon-record:after {
+                background: url(images/media-record.png);
+                background-size: contain;
+            }
+        </style>
+        <script src="js/jquery.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+        <script>
+            var fileSystem;
+
+            $(document).on("pageinit", "#home", pageInitHandler);
+            $(document).on("deviceready", devicereadyHandler);
+
+            function devicereadyHandler() {
+                window.requestFileSystem(LocalFileSystem.TEMPORARY, 0, gotFS, fail);
+                $(document).on("pause", pauseButtonHandler);
+                $(document).on("resume", playButtonHandler);
+                //$(document).on("resume", stopRecButtonHandler);
+            }
+
+            function pageInitHandler() {
+                $("#playButton").on("click", playButtonHandler);
+                $("#pauseButton").on("click", pauseButtonHandler);
+                $("#stopButton").on("click", stopButtonHandler);
+                $("#recButton").on("click", recordButtonHandler);
+                $("#stopRecButton").on("click", stopRecButtonHandler);
+            }
+
+            //播放音樂檔: Play Button
+            var media;
+            var playTime = 0;
+            //紀錄播放音樂的秒數
+            var playInterval;
+            //播放音樂計時控制程式
+
+            function playButtonHandler() {
+                if (!media) {
+                    //alert(device.platform);
+                    if (device.platform == "Android") {
+                        media = new Media("file:///android_asset/www/song.mp3", successHandler, errorHandler);
+                    } else {
+                        media = new Media("song.mp3", successHandler, errorHandler);
+                    }
+                }
+                media.play();
+
+                if (playInterval) {
+                    clearInterval(playInterval);
+                }
+
+                playInterval = setInterval(function() {
+                    setAudioPosition(++playTime + " sec");
+                }, 1000);
+
+            }
+
+            function successHandler() {
+                alert("音樂檔播放結束，共 " + playTime + " 秒");
+                clearInterval(playInterval);
+                playTime = 0;
+            }
+
+            function errorHandler(error) {
+                navigator.notificaton.alert("播放程式出錯!", null, "ERROR", "OK");
+                //alert("音檔播放失敗，請確認！");
+                clearInterval(recInterval);
+                recTime = 0;
+            }
+
+            //播放音樂檔: Pause Button
+            function pauseButtonHandler() {
+                if (media) {
+                    media.pause();
+                    clearInterval(playInterval);
+                }
+            }
+
+            //播放音樂檔: Stop Button
+            function stopButtonHandler() {
+                if (media) {
+                    media.stop();
+                    media.release();
+                    media = undefined;
+                }
+            }
+
+            var srcRec = "file:///storage/sdcard0/Music/record.amr";
+            var srcRec_ios = "/record.wav";
+            var mediaRec;
+            var playRec;
+            var recTime = 0;
+            //紀錄「錄製/播放錄製」聲音的秒數
+            var recLength = 0;
+            var recInterval;
+            //錄音計時控制程式
+
+            function gotFS(fileSystem) {
+                //alert(device.platform);
+                if (device.platform == "Android") {
+                    //alert(fileSystem.root.fullPath);
+                    srcRec = fileSystem.root.fullPath + "/record.amr";
+                    //alert(srcRec);
+                } else if (device.platform == "iOS") {
+                    srcRec_ios = fileSystem.root.fullPath + "record.wav";
+                    //alert(srcRec_ios);
+                }
+            }
+
+            function fail(error) {
+                alert("建立錄製檔案失敗: " + error.code);
+            }
+
+            //錄音與播放：Record Button
+            function recordButtonHandler() {
+                if (!mediaRec) {
+                    var msg = "開始錄音:";
+                    if (device.platform == "Android") {
+                        mediaRec = new Media(srcRec, onSuccess, onError);
+                        msg += srcRec;
+                    } else if (device.platform == "iOS") {
+                        mediaRec = new Media(srcRec_ios, onSuccess, onError);
+                        msg += srcRec_ios;
+                    }
+                    alert(msg);
+                    // Record audio
+                    mediaRec.startRecord();
+
+                }
+
+                //Stop recording after 10 sec
+                recInterval = setInterval(function() {
+                    setAudioPosition(++recTime + " sec");
+                }, 1000);
+
+            }
+
+            // onSuccess Callback
+            function onSuccess() {
+                clearInterval(recInterval);
+                recLength = recTime;
+                recTime = 0;
+                alert("錄音結束");
+
+                $("#stopRecButton").text("STOP/PLAY Rec");
+                //stopRecButtonHandler();//完成錄製後直接播放
+            }
+
+            // onError Callback
+            function onError(error) {
+                alert('code: ' + error.code + '\n' + 'message: ' + error.message + '\n');
+            }
+
+            //StopRec Button
+            function stopRecButtonHandler() {
+                if (mediaRec) {
+                    mediaRec.stopRecord();
+                    try {
+                        mediaRec.release();
+                    } catch (err) {
+                        alert(err.message);
+                    }
+                    mediaRec = undefined;
+                }
+
+                if (recLength > 0 && !playRec) {
+                    if (device.platform == "Android") {
+                        playRec = new Media(srcRec, SRonSuccess, onError);
+                    } else if (device.platform == "iOS") {
+                        playRec = new Media(srcRec_ios, SRonSuccess, onError)
+                    }
+                }
+
+                if (recLength > 0 && playRec) {
+                    alert("開始播放錄音檔...共 " + recLength + " 秒");
+                    playRec.play();
+                    if (recInterval) {
+                        clearInterval(recInterval);
+                    }
+                    recInterval = setInterval(function() {
+                        recTime = recTime + 1;
+                        setAudioPosition(recTime + " sec");
+                    }, 1000);
+                } else {
+                    console.log("錄音完成才能播放！");
+                }
+            }
+
+            function SRonSuccess() {
+                alert("停止錄音播放");
+                playRec.release();
+                playRec = undefined;
+                clearInterval(recInterval);
+                recTime = 0;
+                //setAudioPosition(recTime + " sec");
+            }
+
+            //秒數跳動
+            function setAudioPosition(position) {
+                $('#audio_position').html(position);
+
+            }
+
+            //檔案上傳
+            /*
+            function UploadButtonHandler() {
+                var win = function(r) {
+                    console.log("Code = " + r.responseCode);
+                    console.log("Response = " + r.response);
+                    console.log("Sent = " + r.bytesSent);
+                }
+                var fail = function(error) {
+                    alert("An error has occurred: Code = " + error.code);
+                    console.log("upload error source " + error.source);
+                    console.log("upload error target " + error.target);
+                }
+                var recordfile = "record.wav";
+                var options = new FileUploadOptions();
+                options.fileKey = "file";
+                options.fileName = recordfile;
+                options.mimeType = "audio/wav";
+                //options.chunkedMode = true;
+
+                var headers = {
+                    'headerParam' : 'headerValue'
+                };
+
+                options.headers = headers;
+
+                var ft = new FileTransfer();
+
+                ft.onprogress = function(progressEvent) {
+                    if (progressEvent.lengthComputable) {
+                        loadingStatus.setPercentage(progressEvent.loaded / progressEvent.total);
+                    } else {
+                        loadingStatus.increment();
+                    }
+                };
+
+                ft.upload(recordfile, encodeURI(""), win, fail, options, true);
+
+                //var recordfile = "record.wav";
+                //var options = new FileUploadOptions();
+                //options.fileKey = "file";
+                //options.fileName = recordfile;
+                //options.mimeType = "audio/wav";
+
+                //alert(options.fileName);
+
+                try {
+                    //    var ft = new FileTransfer();
+
+                    //    ft.upload(recordfile,"",onDataReceived,OnDataError,options);
+                } catch(erro) {
+                    alert(erro.message);
+                }
+                //ft.upload(imageURI,"", function(r){
+                //          alert("Upload Success!");
+                //          return false;},
+                //              function(e){
+                //              alert("Upload Error!");
+                //              return false;},
+                //              options);
+
+            }
+
+            function onDataReceived(data) {
+                alert(data);
+            }
+
+            function OnDataError(error) {
+                alert("Failure");
+            }
+	*/
+        </script>
+        <script src="js/jquery.mobile.js"></script>
+        <script src="cordova.js"></script>
+
+    </head>
+    <body>
+
+        <div data-role="page" id="home">
+            <div data-role="header" data-position="fixed">
+                <h1>Media</h1>
+            </div>
+            <div data-role="content" id="content">
+
+                <h3>SmartPinyin Recording APP</h3>
+                <img src="images/cover.jpg">
+                <p id="status">0 sec</p>
+                <div align="center">
+                    <p id="audio_position"></p>
+                    <a href="#" data-inline="true" data-mini="true" data-role="button"
+                    id="playButton" data-icon="play">PLAY</a>
+                    <a href="#" data-inline="true" data-mini="true" data-role="button"
+                    id="pauseButton" data-icon="pause">PAUSE</a>
+                    <a href="#" data-inline="true" data-mini="true" data-role="button"
+                    id="stopButton" data-icon="stop">STOP</a>
+                    <br>
+                    <a href="#" data-inline="true" data-mini="true" data-role="button"
+                    id="recButton" data-icon="record">Rec</a>
+                    <a href="#" data-inline="true" data-mini="true" data-role="button"
+                    id="stopRecButton" data-icon="stop">STOP Rec</a>
+                    <br>
+                    </br>
+
+                </div>
+            </div>
+
+            <div data-role="footer" data-position="fixed">
+                <h2>Record Quality Testing </h2>
+            </div>
+        </div>
+
+    </body>
+</html>
